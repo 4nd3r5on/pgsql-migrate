@@ -40,7 +40,7 @@ export const parseIdAndLabel = (verAndLabelStr: string): VerAndLabel => {
 
 
 // Returns versions, lables and paths of migration files from a list of files 
-export const parseMigrationDir = async (files: string[]): Promise<LocalMigrations> => {
+export const parseMigrationFiles = async (files: string[]): Promise<LocalMigrations> => {
   let result: LocalMigrations = {
     versionsUP:     [],
     migrationsUP:   new Map<number, MigrationInfo>,
@@ -113,7 +113,7 @@ export const findLastCleanVer = (localMigrationIDs: number[], appliedMigrations:
 
 export default {
   parseIdAndLabel,
-  parseMigrationDir,
+  parseMigrationFiles,
   tryReadMigration,
   findLastCleanVer,
   verAndLabelToFName

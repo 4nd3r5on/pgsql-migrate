@@ -1,12 +1,12 @@
 import pg from "pg"
 import fsp from "fs/promises"
-import { VerAndLabel, MigrationsConfig } from "./entities"
-import { findLastCleanVer, parseMigrationDir } from "./internal/utils"
+import { VerAndLabel, MigrationsConfig, LocalMigrations } from "./entities"
+import { findLastCleanVer, parseMigrationFiles } from "./internal/utils"
 import { rollbackToVer, upgradeToVer } from "./internal/migration_ops"
 
-export const getLocalMigrations = async (dirPath: string) => {
+export const getLocalMigrations = async (dirPath: string): Promise<LocalMigrations> => {
   let files = await fsp.readdir(dirPath)
-  await parseMigrationDir(files)
+  return parseMigrationFiles(files)
 }
 
 // Just call it everytime if you're not sure if migrations table exists
@@ -76,4 +76,11 @@ export const migrateTo = async (cfg: MigrationsConfig, targetVer: number) => {
 }
 
 
-export type { VerAndLabel, MigrationsConfig } from "./entities"
+export type { VerAndLabel, MigrationInfo, MigrationsConfig } from "./entities"
+export default {
+  getLocalMigrations,
+  createMigrationTable,
+  getAppliedMigrations,
+  rollbackToCleanVer,
+  migrateTo
+}
