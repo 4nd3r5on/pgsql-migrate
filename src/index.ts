@@ -11,7 +11,7 @@ export const getLocalMigrations = async (dirPath: string): Promise<LocalMigratio
 
 // Just call it everytime if you're not sure if migrations table exists
 // It's safe to run this function even if table exists
-export const createMigrationTable = async (client: pg.PoolClient) => {
+export const createMigrationTable = async (client: pg.PoolClient | pg.Pool) => {
   await client.query(`
   CREATE TABLE IF NOT EXISTS applied_migrations (
     version BIGINT UNIQUE NOT NULL,
