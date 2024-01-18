@@ -7,7 +7,7 @@ It doesn't use any query builder, you don't need ORM to use migrations, it has m
 ## How to use
 Install it from NPM
 ```sh
-npm i 4nd3rs0n/pgsql-migrate
+npm i @4nd3rs0n/pgsql-migrate
 ```
 
 ### Migrations dir
