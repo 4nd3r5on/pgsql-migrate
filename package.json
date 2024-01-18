@@ -1,6 +1,6 @@
 {
   "name": "@4nd3rs0n/pgsql-migrate",
-  "version": "0.0.11",
+  "version": "0.0.13",
   "description": "A simple JavaScript/TypeScript PostgreSQL migration library to apply migrations from SQL files",
   "main": "./dist/index.js",
   "scripts": {

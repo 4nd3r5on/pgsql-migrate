@@ -46,15 +46,16 @@ export const rollbackToCleanVer = async (cfg: MigrationsConfig): Promise<number>
 export const migrateTo = async (cfg: MigrationsConfig, targetVer: number) => {
   const { client, mLocal } = cfg
   const mApplied = await getAppliedMigrations(cfg)
-  if (mApplied.length < 1) {
-    // TODO: Just migrate all the way up
-    return
+
+  let mCurrentVer: number | null = null
+  if (mApplied.length >= 1) {
+    mCurrentVer = mApplied[mApplied.length - 1].version
   }
-  let mCurrentVer = mApplied[mApplied.length - 1].version
+
   if (mCurrentVer === targetVer) {
     // Already up to date
     return
-  } else if (mCurrentVer < targetVer) {
+  } else if (!mCurrentVer || mCurrentVer < targetVer) {
     // Upgrade 
     const cleanVer = findLastCleanVer(mLocal.versionsUP, mApplied);
     if (cleanVer !== null) {
@@ -69,7 +70,7 @@ export const migrateTo = async (cfg: MigrationsConfig, targetVer: number) => {
         label: mInfo.label,
       }]
     })
-    upgradeToVer(client, mLocalUP, cfg.mDir, mCurrentVer, targetVer)
+    upgradeToVer(client, mLocalUP, cfg.mDir, mCurrentVer || -1, targetVer)
   } else {
     rollbackToVer(client, mApplied, cfg.mDir, targetVer)
   }
