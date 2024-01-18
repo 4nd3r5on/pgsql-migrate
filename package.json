@@ -1,0 +1,36 @@
+{
+  "name": "pgsql-migrate",
+  "version": "0.0.1",
+  "description": "A simple JavaScript/TypeScript PostgreSQL migration library to apply migrations from SQL files",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "sql",
+    "postgres",
+    "postgresql",
+    "pgsql",
+    "migrations",
+    "minimalistic",
+    "typescript"
+  ],
+  "author": "Dmitry Anderson (4nd3rs0n/4nd3r5on)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/4nd3r5on/your-repository.git"
+  },
+  "license": "MIT",
+  "files": [
+    "/dist"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.11.4",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "pg-tx": "^1.0.1"
+  }
+}
