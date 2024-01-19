@@ -62,7 +62,7 @@ export const createMigrationTable = async (pool: pg.Pool) => {
 export const getAppliedMigrations = async (cfg: MigrationsConfig): Promise<VerAndLabel[]> => {
   const { pool } = cfg
   const qresult = await pool.query<VerAndLabel>(
-    "SELECT (version, label) FROM applied_migrations ORDER BY version"
+    "SELECT version, label FROM applied_migrations ORDER BY version"
   )
   return qresult.rows
 }
