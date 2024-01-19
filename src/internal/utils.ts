@@ -17,7 +17,7 @@ export const tx = async (pool: pg.Pool, callback: (client: pg.PoolClient) => Pro
 
 // If returned version is -1 -- version is invalid
 export const parseIdAndLabel = (verAndLabelStr: string): VerAndLabel => {
-  let result: VerAndLabel = {version: -1, label: null};
+  let result: VerAndLabel = {version: BigInt("-1"), label: null};
   let underscoreIdx: number = verAndLabelStr.indexOf("_");
   let idStr: string
   let label: string | null = null;
@@ -29,15 +29,13 @@ export const parseIdAndLabel = (verAndLabelStr: string): VerAndLabel => {
       label = verAndLabelStr.substring(underscoreIdx + 1, verAndLabelStr.length) 
     };
   };
-
-  let ver: number = parseInt(idStr);
-  if (Number.isNaN(ver) || ver < 0) {
+  if (Number.isNaN(Number(BigInt(idStr))) || BigInt(idStr) < 0) {
     return result;
   };
 
   return {
-    version: ver,
-    label: label,
+    version: BigInt(idStr),
+    label:   label,
   };
 };
 

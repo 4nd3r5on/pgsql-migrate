@@ -9,8 +9,8 @@ export const loadMigrationDir = async (dirPath: string): Promise<LocalMigrations
   let files = await fsp.readdir(dirPath)
   let result: LocalMigrations = {
     versionsUP:     [],
-    migrationsUP:   new Map<number, Migration>,
-    migrationsDown: new Map<number, Migration>,
+    migrationsUP:   new Map<BigInt, Migration>,
+    migrationsDown: new Map<BigInt, Migration>,
   }
 
   for (let i = 0; i < files.length; i++) {
@@ -60,9 +60,10 @@ export const createMigrationTable = async (pool: pg.Pool) => {
 // Returns an array of versions and labels from smaller to bigger version number.
 // Make sure that migrations table exists before calling this function
 export const getAppliedMigrations = async (cfg: MigrationsConfig): Promise<VerAndLabel[]> => {
+  pg.types.setTypeParser(20, BigInt);
   const { pool } = cfg
   const qresult = await pool.query<VerAndLabel>(
-    "SELECT version, label FROM applied_migrations ORDER BY version"
+    "SELECT (version, label) FROM applied_migrations ORDER BY version"
   )
   return qresult.rows
 }
@@ -83,7 +84,7 @@ export const rollbackToVer = async (
   pool: pg.Pool,
   mLocal: LocalMigrations,
   mApplied: VerAndLabel[],
-  targetVer: number,
+  targetVer: BigInt,
 ) => {
   let mRollaback: Migration[] = []
   for (let i = mApplied.length - 1; i >= 0; i--) {
@@ -114,7 +115,7 @@ export const rollbackToVer = async (
 
 // if return is null -- every version is clean 
 // if return is -1 -- no clean versions
-export const findLastCleanVer = (localMigrationIDs: number[], appliedMigrations: VerAndLabel[]): number | null =>  {
+export const findLastCleanVer = (localMigrationIDs: BigInt[], appliedMigrations: VerAndLabel[]): BigInt | null =>  {
   let minLen = Math.min(localMigrationIDs.length, appliedMigrations.length) 
   let i = 0
   let clean: boolean = true
@@ -124,11 +125,11 @@ export const findLastCleanVer = (localMigrationIDs: number[], appliedMigrations:
       break;
     }
   }
-  return clean ? null : i - 1
+  return clean ? null : localMigrationIDs[i-1]
 }
 
 // Make sure that migrations table exists before calling this function
-export const rollbackToCleanVer = async (cfg: MigrationsConfig): Promise<number> => {
+export const rollbackToCleanVer = async (cfg: MigrationsConfig): Promise<BigInt> => {
   const mApplied = await getAppliedMigrations(cfg)
   const cleanVer = findLastCleanVer(cfg.mLocal.versionsUP, mApplied)
   if (cleanVer === null) {
@@ -153,8 +154,8 @@ export const applyMigration = async (pool: pg.Pool, fpath: string, version: numb
 export const upgradeToVer = async (
   pool: pg.Pool,
   localMigrations: LocalMigrations,
-  currentVer: number,
-  targetVer: number,
+  currentVer: BigInt,
+  targetVer: BigInt,
 ) => {
   let idxCurrent = localMigrations.versionsUP.indexOf(currentVer)
   if (idxCurrent < 0) { throw "Current version isn't listed in local migrations" }
@@ -164,7 +165,7 @@ export const upgradeToVer = async (
   applyVersions.slice(idxCurrent+1, idxTarget)
 
   return await tx(pool, async (client) => {
-    let mVer: number
+    let mVer: BigInt
     for (let i = 0; i < applyVersions.length; i++) {
       mVer = applyVersions[i]
       let migration = localMigrations.migrationsUP.get(mVer)
@@ -183,11 +184,11 @@ export const upgradeToVer = async (
 // Make sure that migrations table exists before calling this function
 // 
 // If you're migrating down -- make sure u have 
-export const migrateTo = async (cfg: MigrationsConfig, targetVer: number) => {
+export const migrateTo = async (cfg: MigrationsConfig, targetVer: BigInt) => {
   const { pool, mLocal } = cfg
   const mApplied = await getAppliedMigrations(cfg)
 
-  let mCurrentVer: number | null = null
+  let mCurrentVer: BigInt | null = null
   if (mApplied.length >= 1) {
     mCurrentVer = mApplied[mApplied.length - 1].version
   }
@@ -200,7 +201,7 @@ export const migrateTo = async (cfg: MigrationsConfig, targetVer: number) => {
     if (cleanVer !== null) {
       throw "DB is dirty. Migrate to a clean version before upgrading DB"
     }
-    upgradeToVer(pool, mLocal, mCurrentVer || -1, targetVer)
+    upgradeToVer(pool, mLocal, mCurrentVer || BigInt(-1), targetVer)
   } else {
     rollbackToVer(pool, mLocal, mApplied, targetVer)
   }
