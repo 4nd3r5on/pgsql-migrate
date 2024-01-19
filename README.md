@@ -46,48 +46,39 @@ Also you can use timestamps instead of IDs like `timestamp_labet.up|down.sql`
 ### Some code examples
 ```ts
 import pg from "pg"
-import type { 
-    MigrationConfig,
-    DBVerInfo,
-} from "pgsql-migrate"
-import { 
-    createMigrationTable
-    getLocalMigrations,
-    findLastCleanVer,
-    rollbackToCleanVer,
-    migrateTo,
-} from "pgsql-migrate"
+import migrate from "@4nd3rs0n/pgsql-migrate"
+import type { MigrationsConfig } from "@4nd3rs0n/pgsql-migrate"
 
 const main = async () => {
     /*
         ... Your code
     */
-    const mLocal = getLocalMigrations(mDirPath)
-    const mCfg: MigrationConfig = {
-        client: pgclient,
-        local:  localMigrations,
-    }
 
     // If you're not sure if migration table exists
     // just call that function
-    await createMigrationTable(mCfg);
-
-    let mApplied = getAppliedMigrations(mCfg)
-    if (mLocal.length < 1) {
-        throw "No migrations were found in diretory"
+    await migrate.createMigrationTable(cfg.pool)
+    let mLocal = await migrate.loadMigrationDir(cfg.directory)
+    let mCfg: MigrationsConfig = {
+        pool: cfg.pool, 
+        mLocal: mLocal
     }
-    let cleanVer = findLastCleanVer(mCfg, mApplied)
-    let dbMaxVer: number =  ? mLocal[mLocal.length - 1]
-    let dbVer: number | null = mApplied[mApplied.length - 1]
+    if (mLocal.versionsUP.length < 1) {
+        throw "No migrations were found in a diretory"
+    }
+
+    let mApplied = await migrate.getAppliedMigrations(mCfg)
+    let cleanVer = migrate.findLastCleanVer(mLocal.versionsUP, mApplied)
+    let dbMaxVer = mLocal.versionsUP[mLocal.versionsUP.length - 1]
+    let mLast = mApplied.length < 1 ? null : mApplied[mApplied.length - 1]
     console.log(
-        `Current DB version: ${dbVer}/${dbMaxVer}\n`+
-        `Dirty: ${cleanVer === null ? true : false}`
+        `Current DB version: ${mLast?.version || "null"}/${dbMaxVer}\n`+
+        `Dirty: ${cleanVer !== null ? true : false}`
     )
 
-    await rollbackToCleanVer(mCfg).catch(err => {
+    await migrate.rollbackToCleanVer(mCfg).catch(err => {
         console.log(`Error while rolling back: ${err}`)
     })
-    await migrateTo(mCfg, dbMaxVer).catch(err => {
+    await migrate.migrateTo(mCfg, dbMaxVer).catch(err => {
         console.log(`Error while upgrading DB: ${err}`)
     })
 }

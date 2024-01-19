@@ -1,6 +1,6 @@
 {
   "name": "@4nd3rs0n/pgsql-migrate",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "A simple JavaScript/TypeScript PostgreSQL migration library to apply migrations from SQL files",
   "main": "./dist/index.js",
   "scripts": {
@@ -18,7 +18,7 @@
   "author": "Dmitry Anderson (4nd3rs0n/4nd3r5on)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/4nd3r5on/psql-migrate.git"
+    "url": "git+https://github.com/4nd3r5on/pgsql-migrate.git"
   },
   "license": "MIT",
   "files": [
