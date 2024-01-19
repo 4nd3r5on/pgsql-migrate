@@ -63,7 +63,7 @@ export const getAppliedMigrations = async (cfg: MigrationsConfig): Promise<VerAn
   pg.types.setTypeParser(20, BigInt);
   const { pool } = cfg
   const qresult = await pool.query<VerAndLabel>(
-    "SELECT (version, label) FROM applied_migrations ORDER BY version"
+    "SELECT version, label FROM applied_migrations ORDER BY version"
   )
   return qresult.rows
 }
@@ -116,6 +116,9 @@ export const rollbackToVer = async (
 // if return is null -- every version is clean 
 // if return is -1 -- no clean versions
 export const findLastCleanVer = (localMigrationIDs: BigInt[], appliedMigrations: VerAndLabel[]): BigInt | null =>  {
+  if (appliedMigrations.length < 1) {
+    return null
+  }
   let minLen = Math.min(localMigrationIDs.length, appliedMigrations.length) 
   let i = 0
   let clean: boolean = true
@@ -131,6 +134,9 @@ export const findLastCleanVer = (localMigrationIDs: BigInt[], appliedMigrations:
 // Make sure that migrations table exists before calling this function
 export const rollbackToCleanVer = async (cfg: MigrationsConfig): Promise<BigInt> => {
   const mApplied = await getAppliedMigrations(cfg)
+  if (mApplied.length < 1) {
+    return -1n
+  }
   const cleanVer = findLastCleanVer(cfg.mLocal.versionsUP, mApplied)
   if (cleanVer === null) {
     return mApplied[mApplied.length - 1].version
@@ -157,8 +163,11 @@ export const upgradeToVer = async (
   currentVer: BigInt,
   targetVer: BigInt,
 ) => {
-  let idxCurrent = localMigrations.versionsUP.indexOf(currentVer)
-  if (idxCurrent < 0) { throw "Current version isn't listed in local migrations" }
+  let idxCurrent: number = -1
+  if (BigInt(currentVer.toString()) > -1) {
+    idxCurrent = localMigrations.versionsUP.indexOf(currentVer)
+    if (idxCurrent < 0) { throw "Current version isn't listed in local migrations" }
+  }
   let idxTarget = localMigrations.versionsUP.indexOf(targetVer)
   if (idxTarget < 0) { throw "Target version isn't listed in local migrations" }
   let applyVersions = localMigrations.versionsUP 
