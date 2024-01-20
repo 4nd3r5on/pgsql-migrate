@@ -2,7 +2,7 @@
 
 Minimalistic JS/TS migrations library for PostgreSQL that just works.
 
-It doesn't use any query builder, you don't need ORM to use migrations, it has minimum dependencies, you can write your migrations in a raw SQL, it tryes to be performant for it's features and usabillity.
+It doesn't use any query builder, you don't need ORM to use migrations, it has minimum dependencies, you can write your migrations in a raw SQL, it tries to be performant for it's features and usabillity.
 
 ## How to use
 Install it from NPM
