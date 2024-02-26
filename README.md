@@ -49,38 +49,58 @@ import pg from "pg"
 import migrate from "@4nd3rs0n/pgsql-migrate"
 import type { MigrationsConfig } from "@4nd3rs0n/pgsql-migrate"
 
+type DoMigrateConfig = {
+  pool: pg.Pool
+  migrationsDir: string
+  versionLimit: BigInt | null
+}
+
+const doMigrate = async (cfg: DoMigrateConfig) => {
+  let mLocal = await migrate.loadMigrationDir(cfg.migrationsDir)
+  let mCfg: MigrationsConfig = {
+    pool:   cfg.pool,
+    mLocal: mLocal
+  }
+
+  if (mLocal.versionsUP.length < 1) {
+    throw `No migrations were found in ${cfg.migrationsDir}`
+  }
+  let maxVersion = mLocal.versionsUP[mLocal.versionsUP.length - 1]
+
+  let migrateTo = cfg.versionLimit || maxVersion
+  // If you're not sure if migration table exists
+  // just call that function
+  await migrate.createMigrationTable(cfg.pool)
+  await migrate.rollbackToCleanVer(mCfg)
+  await migrate.migrateTo(mCfg, migrateTo)
+
+  await new Promise(r => setTimeout(r, 300));
+  let mApplied = await migrate.getAppliedMigrations(mCfg)
+  let currentVer: BigInt | null = null
+  if (mApplied.length > 0) {
+    currentVer = mApplied[mApplied.length - 1].version
+  }
+  let mLastClean = migrate.findLastCleanVer(mLocal.versionsUP, mApplied)
+
+  console.log(
+    `DB Info:\n`+
+    `\tDB Version Limit: ${cfg.versionLimit}\n`+
+    `\tCurrent DB Version: ${currentVer}/${maxVersion}\n`+
+    `\tDirty: ${mLastClean !== null ? true : false}\n`
+  )
+}
+
 const main = async () => {
-    /*
-        ... Your code
-    */
-
-    // If you're not sure if migration table exists
-    // just call that function
-    await migrate.createMigrationTable(cfg.pool)
-    let mLocal = await migrate.loadMigrationDir(cfg.directory)
-    let mCfg: MigrationsConfig = {
-        pool: cfg.pool, 
-        mLocal: mLocal
-    }
-    if (mLocal.versionsUP.length < 1) {
-        throw "No migrations were found in a diretory"
-    }
-
-    let mApplied = await migrate.getAppliedMigrations(mCfg)
-    let cleanVer = migrate.findLastCleanVer(mLocal.versionsUP, mApplied)
-    let dbMaxVer = mLocal.versionsUP[mLocal.versionsUP.length - 1]
-    let mLast = mApplied.length < 1 ? null : mApplied[mApplied.length - 1]
-    console.log(
-        `Current DB version: ${mLast?.version || "null"}/${dbMaxVer}\n`+
-        `Dirty: ${cleanVer !== null ? true : false}`
-    )
-
-    await migrate.rollbackToCleanVer(mCfg).catch(err => {
-        console.log(`Error while rolling back: ${err}`)
-    })
-    await migrate.migrateTo(mCfg, dbMaxVer).catch(err => {
-        console.log(`Error while upgrading DB: ${err}`)
-    })
+  /*
+    ... Your code
+  */
+  let pool: pg.Pool = new pg.Pool(cfg)
+  pg.types.setTypeParser(20, BigInt);
+  await doMigrate({
+  pool,
+    migrationsDir,
+    versionLimit: null,
+  })
 }
 
 main()

@@ -60,7 +60,6 @@ export const createMigrationTable = async (pool: pg.Pool) => {
 // Returns an array of versions and labels from smaller to bigger version number.
 // Make sure that migrations table exists before calling this function
 export const getAppliedMigrations = async (cfg: MigrationsConfig): Promise<VerAndLabel[]> => {
-  pg.types.setTypeParser(20, BigInt);
   const { pool } = cfg
   const qresult = await pool.query<VerAndLabel>(
     "SELECT version, label FROM applied_migrations ORDER BY version"
@@ -210,9 +209,9 @@ export const migrateTo = async (cfg: MigrationsConfig, targetVer: BigInt) => {
     if (cleanVer !== null) {
       throw "DB is dirty. Migrate to a clean version before upgrading DB"
     }
-    upgradeToVer(pool, mLocal, mCurrentVer || BigInt(-1), targetVer)
+    await upgradeToVer(pool, mLocal, mCurrentVer || BigInt(-1), targetVer)
   } else {
-    rollbackToVer(pool, mLocal, mApplied, targetVer)
+    await rollbackToVer(pool, mLocal, mApplied, targetVer)
   }
 }
 
